@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 func main() {
@@ -22,17 +23,22 @@ func main() {
 		b := path.Base(wd)
 		if b == "src" {
 			wd = path.Dir(wd)
+			// fmt.Println("GOPATH is now: " + wd )
 			break
 		} else if b == "/" {
 			wd = "$GOPATH"
+			// fmt.Println("Using default GOPATH.")
 			break
 		}
 	}
-	// for i := range env {
-	// 	fmt.Println(env[i])
-	// }
-	env := append(os.Environ(), "GOPATH="+wd)
 	cmd := exec.Command("go", args...)
+	env := os.Environ()
+	for i := range env {
+		if strings.HasPrefix(env[i], "GOPATH=") {
+			env[i] = "GOPATH=" + wd
+			break
+		}
+	}
 	cmd.Env = env
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

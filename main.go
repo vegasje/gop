@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -18,28 +18,15 @@ func main() {
 	if err != nil {
 		log.Fatalln("gop: Unable to get working directory.")
 	}
-	for {
-		wd = path.Dir(wd)
-		b := path.Base(wd)
-		if b == "src" {
-			wd = path.Dir(wd)
-			// fmt.Println("GOPATH is now: " + wd )
-			break
-		} else if b == "/" {
-			wd = "$GOPATH"
-			// fmt.Println("Using default GOPATH.")
-			break
-		}
-	}
+	src := srcDir(wd)
 	cmd := exec.Command("go", args...)
-	env := os.Environ()
-	for i := range env {
-		if strings.HasPrefix(env[i], "GOPATH=") {
-			env[i] = "GOPATH=" + wd
-			break
-		}
+	if src != "" {
+		fmt.Printf("Running with custom GOPATH: %s\n", src)
+		env := os.Environ()
+		cmd.Env = envWithGopath(src, env)
+	} else {
+		fmt.Println("Running with default GOPATH.")
 	}
-	cmd.Env = env
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -47,4 +34,36 @@ func main() {
 		log.Fatalln("gop: Unable to start command.")
 	}
 	_ = cmd.Wait()
+}
+
+func srcDir(wd string) string {
+	src := wd
+	for {
+		src = path.Dir(src)
+		b := path.Base(src)
+		if b == "src" {
+			src = path.Dir(src)
+			break
+		} else if b == "/" {
+			src = ""
+			break
+		}
+	}
+	return src
+}
+
+func envWithGopath(src string, env []string) []string {
+	v := "GOPATH=" + src
+	found := false
+	for i := range env {
+		if strings.HasPrefix(env[i], "GOPATH=") {
+			env[i] = v
+			found = true
+			break
+		}
+	}
+	if !found {
+		env = append(env, v)
+	}
+	return env
 }

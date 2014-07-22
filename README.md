@@ -16,6 +16,5 @@ project
 					main.go
 ```
 
-The following scenarios would work:
+The following command would work and install the executable inside project/bin:
 - gop install (inside of project/github.com/username/project)
-- gop install project/ (inside of project/github.com/username)
